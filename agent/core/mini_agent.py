@@ -6,36 +6,61 @@ from dotenv import load_dotenv
 from agent.tools.defi_llama import DefiLlamaTool
 from agent.tools.coingecko import CoinGeckoTool
 from agent.tools.dexscreener import DexscreenerTool
+from agent.tools.risk_engine import RiskEngine
+from agent.tools.base_rpc import BaseRpcTool
+from agent.core.memory import AgentMemory
 
 load_dotenv()
 
 class DefiSenseMiniAgent:
-    """Mini-Agent for DeFi Research, Yield Analytics, and Protocol Intelligence."""
+    """Intelligent DeFi Research, Risk Assessment & Yield Orchestration Agent."""
 
     def __init__(self):
         self.defi_llama = DefiLlamaTool()
         self.coingecko = CoinGeckoTool()
         self.dexscreener = DexscreenerTool()
+        self.risk_engine = RiskEngine()
+        self.base_rpc = BaseRpcTool()
+        self.memory = AgentMemory()
         self.api_key = os.getenv("GEMINI_API_KEY")
 
     def analyze_query(self, user_prompt: str) -> Dict[str, Any]:
-        """Orchestrate tools and produce a comprehensive research report."""
+        """Orchestrate tools, calculate risk metrics, and synthesize a structured intelligence report."""
         prompt_lower = user_prompt.lower()
 
         # Step 1: Detect Intent
         is_yield_query = any(k in prompt_lower for k in ["yield", "apy", "earn", "pool", "farm", "interest"])
         is_protocol_query = any(k in prompt_lower for k in ["tvl", "protocol", "volume", "aerodrome", "uniswap", "moonwell", "aave"])
         is_price_query = any(k in prompt_lower for k in ["price", "market", "token", "worth", "cost"])
-        chain = "Base"  # Default focus for Agentmaxxx
+        is_network_query = any(k in prompt_lower for k in ["gas", "block", "rpc", "base sepolia", "network"])
+        chain = "Base"
 
         context_data: Dict[str, Any] = {
             "chain": chain,
-            "query": user_prompt
+            "query": user_prompt,
+            "recent_context": self.memory.get_recent_context()
         }
 
-        # Step 2: Fetch relevant live on-chain & DeFi metrics
-        if is_yield_query or (not is_protocol_query and not is_price_query):
-            context_data["yield_pools"] = self.defi_llama.get_yield_pools(chain=chain, limit=8)
+        # Step 2: Query Tools
+        if is_network_query or "gas" in prompt_lower:
+            context_data["network_stats"] = self.base_rpc.get_network_stats()
+
+        if is_yield_query or (not is_protocol_query and not is_price_query and not is_network_query):
+            pools = self.defi_llama.get_yield_pools(chain=chain, limit=8)
+            # Enrich each pool with RiskEngine scoring
+            enriched_pools = []
+            for p in pools:
+                if "error" not in p:
+                    risk_meta = self.risk_engine.assess_pool_risk(
+                        pool_name=f"{p.get('project')} {p.get('symbol')}",
+                        apy=p.get('apy', 0),
+                        tvl_usd=p.get('tvl_usd', 0),
+                        is_stablecoin=p.get('stablecoin', False),
+                        project=p.get('project', '')
+                    )
+                    p["risk_assessment"] = risk_meta
+                enriched_pools.append(p)
+            context_data["yield_pools"] = enriched_pools
 
         if is_protocol_query or not is_yield_query:
             context_data["top_protocols"] = self.defi_llama.get_top_protocols_by_chain(chain=chain, limit=6)
@@ -44,8 +69,14 @@ class DefiSenseMiniAgent:
             context_data["top_tokens"] = self.coingecko.get_top_tokens_by_market_cap(limit=5)
             context_data["dex_pairs"] = self.dexscreener.search_pairs("Base")[:5]
 
-        # Step 3: Generate AI Synthesis (Gemini or Analytical Engine)
+        # Step 3: Synthesize Research Report
         report = self._synthesize_report(user_prompt, context_data)
+
+        # Step 4: Record interaction in memory
+        tools_used = ["DeFi Llama", "Risk Engine", "Dexscreener"]
+        if is_network_query:
+            tools_used.append("Base Sepolia RPC")
+        self.memory.add_interaction(user_prompt, report, tools_used)
 
         return {
             "query": user_prompt,
@@ -55,7 +86,7 @@ class DefiSenseMiniAgent:
         }
 
     def _synthesize_report(self, query: str, context: Dict[str, Any]) -> str:
-        """Synthesize a structured research report."""
+        """Synthesize a structured research report with risk scoring."""
         if self.api_key:
             try:
                 import google.generativeai as genai
@@ -63,61 +94,70 @@ class DefiSenseMiniAgent:
                 model = genai.GenerativeModel("gemini-1.5-flash")
 
                 system_prompt = (
-                    "You are DefiSense, an elite autonomous DeFi Research and Risk Agent. "
-                    "Analyze the real-time on-chain and DeFi market data provided below. "
-                    "Provide a crisp, actionable report including: Summary, Top Opportunities, Risk Assessment (IL risk, protocol safety, TVL health), and Actionable Recommendation."
+                    "You are DefiSense, an elite autonomous DeFi Research and Risk Agent for Base. "
+                    "Analyze the provided live on-chain and DeFi Llama metrics. "
+                    "Include: Executive Summary, Top Yield/Protocol Findings, Risk Ratings with Impermanent Loss estimates, and clear Actionable Guidance."
                 )
 
                 prompt = f"{system_prompt}\n\nUser Question: {query}\n\nLive DeFi Context Data:\n{json.dumps(context, indent=2)}"
                 response = model.generate_content(prompt)
                 if response and response.text:
                     return response.text
-            except Exception as e:
-                pass  # Fallback to local analytical engine
+            except Exception:
+                pass
 
-        # High-quality deterministic analytical synthesizer
         return self._local_analytical_engine(query, context)
 
     def _local_analytical_engine(self, query: str, context: Dict[str, Any]) -> str:
-        """Deterministic research report generator when LLM key is absent."""
+        """High-conviction deterministic research report with risk calculations."""
         chain = context.get("chain", "Base")
         pools = context.get("yield_pools", [])
         protocols = context.get("top_protocols", [])
+        network = context.get("network_stats", {})
 
         lines = [
             f"# ⚡ DefiSense Intelligence Report: {query.strip()}",
-            f"**Target Chain**: {chain} | **Data Timestamp**: Live DeFi Llama & DEX Data\n",
+            f"**Target Chain**: {chain} | **Analysis Engine**: QuantPulse Risk v1.0\n",
             "## 📊 Executive Summary",
             f"Analyzed real-time liquidity and yield conditions across the {chain} ecosystem."
         ]
 
+        if network and network.get("connected"):
+            lines.append(f"- **On-Chain Gas**: Base Sepolia gas currently at `{network.get('gas_price_gwei')} Gwei` (Block #{network.get('latest_block')}).")
+
         if protocols:
             top_p = protocols[0]
-            lines.append(f"- **Leading Protocol**: **{top_p.get('name')}** dominates with **${top_p.get('tvl', 0):,.0f} TVL** ({top_p.get('category')}).")
+            lines.append(f"- **Dominant Protocol**: **{top_p.get('name')}** leads with **${top_p.get('tvl', 0):,.0f} TVL**.")
 
         if pools:
             best_pool = pools[0]
-            lines.append(f"- **Top Yield Opportunity**: **{best_pool.get('project')} ({best_pool.get('symbol')})** offering **{best_pool.get('apy')}% APY** (TVL: ${best_pool.get('tvl_usd', 0):,.0f}).")
-
-        if protocols:
-            lines.append("\n## 🏛️ Top Protocols by TVL on Base")
-            for p in protocols[:5]:
-                ch_1d = p.get('change_1d')
-                trend = f" ({ch_1d:+.2f}% 24h)" if ch_1d is not None else ""
-                lines.append(f"1. **{p.get('name')}** ({p.get('category')}): `${p.get('tvl', 0):,.0f}`{trend}")
+            r_meta = best_pool.get("risk_assessment", {})
+            lines.append(f"- **Top Yield Opportunity**: **{best_pool.get('project')} ({best_pool.get('symbol')})** at **{best_pool.get('apy')}% APY** ({r_meta.get('risk_tier', 'Analyzed')}).")
 
         if pools:
-            lines.append("\n## 🌾 High-Conviction Yield Pools")
+            lines.append("\n## 🌾 Yield Pools & QuantPulse Risk Assessment")
             for p in pools[:5]:
-                il_tag = "⚠️ High IL Risk" if p.get("il_risk") == "yes" else "🛡️ Low IL / Stable"
-                lines.append(f"- **{p.get('project')}** `{p.get('symbol')}`: **{p.get('apy')}% APY** (Base: {p.get('apy_base')}%, Reward: {p.get('apy_reward')}%) | TVL: `${p.get('tvl_usd', 0):,.0f}` | {il_tag}")
+                r = p.get("risk_assessment", {})
+                score = r.get("risk_score", 50)
+                tier = r.get("risk_tier", "Tier N/A")
+                il = r.get("projected_il_est_pct", 0.0)
+                lines.append(f"### {p.get('project')} `{p.get('symbol')}`")
+                lines.append(f"- **APY**: **{p.get('apy')}%** (Base: {p.get('apy_base')}%, Reward: {p.get('apy_reward')}%)")
+                lines.append(f"- **Liquidity (TVL)**: `${p.get('tvl_usd', 0):,.0f}`")
+                lines.append(f"- **Risk Rating**: `{tier}` (Score: {score}/100 | Est. IL: ~{il}%)")
+                if r.get("verdict"):
+                    lines.append(f"- *Strategy Note*: {r.get('verdict')}")
+                lines.append("")
+
+        if protocols:
+            lines.append("## 🏛️ Top Base Protocols by Total Value Locked")
+            for p in protocols[:5]:
+                lines.append(f"1. **{p.get('name')}** ({p.get('category')}): `${p.get('tvl', 0):,.0f}`")
 
         lines.extend([
-            "\n## 🛡️ Risk & Safety Analysis",
-            "- **TVL Health**: Protocols with >$10M TVL (e.g. Aerodrome, Uniswap, Seamless) have strong liquidity depth and battle-tested smart contracts.",
-            "- **Impermanent Loss (IL)**: For volatile pairs, ensure rewards exceed projected divergence loss. Favor stable or high-volume native pools.",
-            "\n## 💡 Agent Recommendation",
-            f"For conservative yield, explore stablecoin pools on leading Base money markets. For aggressive alpha, utilize liquidity incentives on Aerodrome with active monitoring."
+            "\n## 💡 Agent Recommendation & Next Steps",
+            "- **For Conservative Yield**: Deposit into bluechip money markets (Moonwell/Seamless) or USDC single-sided lending.",
+            "- **For Yield Maximization**: Utilize Aerodrome Slipstream concentrated LP pools with active range rebalancing."
         ])
 
         return "\n".join(lines)
