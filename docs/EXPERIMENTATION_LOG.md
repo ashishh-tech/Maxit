@@ -12,17 +12,18 @@
 | **EXP-001** | Oct 6 | API Discovery: DeFi Llama | Fetch live TVL, top pools, and APY rates on Base without API keys | Tested `/protocols`, `/yields`, and `/v2/chains` endpoints | Successfully retrieved live Base protocol data and pool APYs with zero rate limit issues | ✅ Succeeded |
 | **EXP-002** | Oct 6 | API Discovery: CoinGecko | Fetch token prices and market data for major Base tokens | Tested CoinGecko public ping and simple price endpoint | Works for top tokens; fallback to Dexscreener needed for long-tail pairs | ✅ Succeeded |
 | **EXP-003** | Oct 6 | Agent Core: Mini-Agent Architecture | Test direct LLM tool-calling vs single-pass prompt synthesis for DeFi queries | Built Day 1 Mini-Agent CLI fetching real-time DeFi Llama data formatted for LLM reasoning | Low latency, reliable synthesis of current yield and TVL metrics | ✅ Succeeded |
+| **EXP-004** | Oct 6 | Risk Engine: Impermanent Loss & TVL Scoring | Calculate projected divergence and risk-adjusted scores for liquidity pools | Built `RiskEngine` with mathematical IL divergence curve and TVL penalty thresholds | Accurately assigns risk tiers (Low/Medium/High) to volatile LP pairs vs stable pools | ✅ Succeeded |
+| **EXP-005** | Oct 6 | Blockchain: Base Sepolia RPC Integration | Query on-chain network state, latest block, and gas estimates in real-time | Integrated `web3.py` with Base Sepolia public RPC endpoint (`https://sepolia.base.org`) | Real-time gas and block queries executing in <250ms | ✅ Succeeded |
 
 ---
 
 ## 🔬 Detailed Experiment Notes
 
-### EXP-001: DeFi Llama Integration
-- **Endpoints Tested**:
-  - `https://api.llama.fi/protocols` -> Protocol list + TVL across chains.
-  - `https://yields.llama.fi/pools` -> Yields, APY, 7d APY trend, and pool token composition.
-- **Key Takeaway**: Base chain data is rich on DeFi Llama (Aerodrome, Uniswap, Moonwell, Overnight Finance, Seamless Protocol). Filtering by `chain == 'Base'` gives immediate high-conviction pools.
-
-### EXP-002: Token & Pair Pricing (CoinGecko + Dexscreener)
-- **Observations**: Free CoinGecko API has rate limits (10-30 req/min). For DEX-native tokens and pools on Base, `api.dexscreener.com/latest/dex/tokens/{address}` provides instant pair information with no auth required.
-- **Decision**: Hybrid approach — CoinGecko for macro assets + Dexscreener for real-time DEX liquidity pairs on Base.
+### EXP-004: QuantPulse Risk & Impermanent Loss Formula
+- **Formula Implemented**:
+  $$IL(k) = \frac{2\sqrt{k}}{1 + k} - 1$$
+  where $k = \frac{P_{new}}{P_{old}}$.
+- **Risk Score Weights**:
+  - Liquidity Depth (<$100k TVL: +40 risk points)
+  - APY Sustainability (>500% APY: +45 risk points)
+  - Bluechip Protocol Status (Aerodrome, Uniswap, Moonwell: -15 risk points)
