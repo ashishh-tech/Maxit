@@ -1,207 +1,39 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { 
-  Bot, 
-  Send, 
-  Sparkles, 
-  TrendingUp, 
-  ShieldAlert, 
-  Layers, 
-  Wallet, 
-  Search,
-  ExternalLink,
-  ChevronRight,
-  Zap,
-  Activity,
-  CheckCircle2,
-  Copy,
-  Check,
-  RefreshCw,
-  Fuel,
-  ArrowUpRight
-} from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
 
-interface Message {
-  id: string;
-  sender: "user" | "agent";
-  content: string;
+interface ResearchReport {
+  query: string;
+  report: string;
   timestamp: string;
-  toolsUsed?: string[];
-  rawData?: any;
-}
-
-const QUICK_PROMPTS = [
-  "🔥 Best yields on Base right now",
-  "🏛️ Top protocols by TVL on Base",
-  "🛡️ Safe stablecoin yield pools",
-  "⚡ Aerodrome vs Uniswap comparison",
-  "⛽ Check Base gas and block height",
-];
-
-// Rich Markdown / Report Formatter
-function FormattedReport({ content }: { content: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const renderFormattedLine = (line: string, index: number) => {
-    const trimmed = line.trim();
-
-    if (!trimmed) {
-      return <div key={index} className="h-2" />;
-    }
-
-    // Main Header #
-    if (trimmed.startsWith("# ")) {
-      return (
-        <h1 key={index} className="text-base sm:text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-200 to-cyan-400 mt-2 mb-2">
-          {trimmed.replace(/^#\s*/, "")}
-        </h1>
-      );
-    }
-
-    // Sub Header ##
-    if (trimmed.startsWith("## ")) {
-      return (
-        <h2 key={index} className="text-xs sm:text-sm font-semibold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5 mt-3 mb-1.5 border-b border-slate-800/80 pb-1">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-          {trimmed.replace(/^##\s*/, "")}
-        </h2>
-      );
-    }
-
-    // Sub-sub Header ###
-    if (trimmed.startsWith("### ")) {
-      return (
-        <h3 key={index} className="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-1.5 mt-2.5 mb-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-          {trimmed.replace(/^###\s*/, "")}
-        </h3>
-      );
-    }
-
-    // Table divider line
-    if (trimmed.startsWith("|---") || trimmed.startsWith("|:---")) {
-      return null;
-    }
-
-    // Table rows
-    if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
-      const cells = trimmed.split("|").filter((c, i, arr) => i > 0 && i < arr.length - 1);
-      return (
-        <div key={index} className="grid grid-cols-3 gap-2 p-2 bg-slate-950/60 border border-slate-800/80 rounded-lg text-xs my-1 font-mono">
-          {cells.map((cell, cIdx) => (
-            <div key={cIdx} className={cIdx === 0 ? "font-semibold text-slate-300" : "text-cyan-300"}>
-              {parseInlineMarkdown(cell.trim())}
-            </div>
-          ))}
-        </div>
-      );
-    }
-
-    // Bullet points
-    if (trimmed.startsWith("- ") || trimmed.startsWith("• ")) {
-      const bulletText = trimmed.replace(/^[-•]\s*/, "");
-      return (
-        <div key={index} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300 my-1 pl-1">
-          <span className="text-cyan-400 mt-0.5">•</span>
-          <div className="flex-1 leading-relaxed">{parseInlineMarkdown(bulletText)}</div>
-        </div>
-      );
-    }
-
-    // Numbered lists
-    if (/^\d+\.\s/.test(trimmed)) {
-      const numText = trimmed.replace(/^\d+\.\s*/, "");
-      return (
-        <div key={index} className="flex items-start gap-2 text-xs sm:text-sm text-slate-300 my-1 pl-1">
-          <span className="font-mono text-cyan-400 text-xs mt-0.5">▸</span>
-          <div className="flex-1 leading-relaxed">{parseInlineMarkdown(numText)}</div>
-        </div>
-      );
-    }
-
-    return (
-      <p key={index} className="text-xs sm:text-sm text-slate-300 leading-relaxed my-1">
-        {parseInlineMarkdown(trimmed)}
-      </p>
-    );
-  };
-
-  const parseInlineMarkdown = (text: string) => {
-    const parts = text.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={i} className="font-bold text-white">{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith("`") && part.endsWith("`")) {
-        return (
-          <code key={i} className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/50 mx-0.5">
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-      if (part.startsWith("*") && part.endsWith("*")) {
-        return <em key={i} className="italic text-slate-400">{part.slice(1, -1)}</em>;
-      }
-      return part;
-    });
-  };
-
-  const lines = content.split("\n");
-
-  return (
-    <div className="relative group">
-      <div className="space-y-0.5">
-        {lines.map((line, idx) => renderFormattedLine(line, idx))}
-      </div>
-      
-      <button
-        onClick={handleCopy}
-        className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-cyan-300 border border-slate-700 text-[11px] flex items-center gap-1 shadow-md"
-        title="Copy report"
-      >
-        {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-        <span>{copied ? "Copied" : "Copy"}</span>
-      </button>
-    </div>
-  );
+  poolsIndexed: number;
 }
 
 export default function DefiSenseApp() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome-1",
-      sender: "agent",
-      content: `# 🤖 Welcome to DefiSense
-I am your autonomous **DeFi Research & Yield Intelligence Agent** native to Base L2.
-
-## 🎯 Active Capabilities
-- **Scan Live Yield Pools**: Real-time APYs, TVL, and reward breakdown from DeFi Llama
-- **QuantPulse Risk Engine**: Mathematical Impermanent Loss estimates and pool sustainability rating
-- **Live Base RPC State**: Real-time gas price tracker in Gwei and latest block queries
-- **DEX Liquidity Depth**: Comparison across Aerodrome, Uniswap V3, Moonwell and Base money markets
-
-Ask me anything or tap one of the quick research actions below!`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      toolsUsed: ["DeFi Llama Yields", "Base Sepolia RPC", "QuantPulse Risk Engine"]
-    }
-  ]);
-
+  const [activeTab, setActiveTab] = useState<"terminal" | "radar" | "yields" | "alerts">("terminal");
   const [inputQuery, setInputQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [activeToolStep, setActiveToolStep] = useState<string | null>(null);
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [gasGwei, setGasGwei] = useState<string>("0.006");
-  const [blockNumber, setBlockNumber] = useState<number>(52321000);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+  const [walletConnected, setWalletConnected] = useState(true);
+  const [gasGwei, setGasGwei] = useState("0.006");
+  const [blockNumber, setBlockNumber] = useState(52321000);
 
-  // Poll live Base gas periodically
+  // Active AI Briefing State
+  const [activeBriefing, setActiveBriefing] = useState<ResearchReport>({
+    query: "Base Ecosystem Yield Scan",
+    report: `Liquidity distribution across Base vAMM and concentrated DEXs exhibits stable fee compounding with subdued volatility. Top risk-adjusted opportunities remain concentrated in blue-chip pairings:
+
+• Stable liquidity depth on Aerodrome continues to outpace Uniswap V3 on low-slippage routing.
+• cbBTC incentives offer attractive hedged yields with under 1.2% projected 30-day Impermanent Loss.`,
+    timestamp: "Updated 2m ago",
+    poolsIndexed: 142,
+  });
+
+  const [chatHistory, setChatHistory] = useState<
+    Array<{ sender: "user" | "agent"; text: string; time: string }>
+  >([]);
+
+  // Fetch real-time Base gas
   useEffect(() => {
     const fetchGas = async () => {
       try {
@@ -217,382 +49,625 @@ Ask me anything or tap one of the quick research actions below!`,
         const blockHex = data.find((d: any) => d.id === 1)?.result;
         const gasHex = data.find((d: any) => d.id === 2)?.result;
         if (blockHex) setBlockNumber(parseInt(blockHex, 16));
-        if (gasHex) setGasGwei(((parseInt(gasHex, 16)) / 1e9).toFixed(4));
+        if (gasHex) setGasGwei(((parseInt(gasHex, 16)) / 1e9).toFixed(3));
       } catch {
-        // keep fallback
+        // keep default
       }
     };
     fetchGas();
-    const interval = setInterval(fetchGas, 15000);
+    const interval = setInterval(fetchGas, 12000);
     return () => clearInterval(interval);
   }, []);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const handleSendQuery = async (queryText?: string) => {
+    const q = queryText || inputQuery;
+    if (!q.trim() || isLoading) return;
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, activeToolStep]);
-
-  const handleSend = async (queryToSend?: string) => {
-    const query = queryToSend || inputQuery;
-    if (!query.trim() || isLoading) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      sender: "user",
-      content: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
+    const userQuery = q.trim();
     setInputQuery("");
     setIsLoading(true);
 
-    // Dynamic step reasoning UX
-    setActiveToolStep("Classifying user intent & orchestrating tools...");
-    await new Promise((r) => setTimeout(r, 450));
-    setActiveToolStep("Querying on-chain RPC & DeFi Llama endpoints...");
-    await new Promise((r) => setTimeout(r, 550));
-    setActiveToolStep("QuantPulse Risk Engine computing divergence scores...");
+    const currentTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    // Add to chat history
+    setChatHistory((prev) => [
+      ...prev,
+      { sender: "user", text: userQuery, time: currentTime },
+    ]);
 
     try {
       const res = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: userQuery }),
       });
 
       const data = await res.json();
+      const reportText = data.report || "No data received from research agent.";
 
-      let toolsUsed = ["DeFi Llama Yields", "QuantPulse Risk Engine"];
-      if (/gas|block|rpc|network/i.test(query)) {
-        toolsUsed = ["Base Sepolia RPC", "Web3 State Tracker"];
-      } else if (/protocol|tvl/i.test(query)) {
-        toolsUsed = ["DeFi Llama Protocols", "TVL Aggregator"];
-      } else if (/compare|vs|aerodrome/i.test(query)) {
-        toolsUsed = ["Aerodrome Slipstream", "Uniswap V3 DEX", "QuantPulse"];
-      }
-      
-      const agentMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        sender: "agent",
-        content: data.report || "No response received.",
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        toolsUsed,
-        rawData: data.raw_data
-      };
+      setActiveBriefing({
+        query: userQuery,
+        report: reportText,
+        timestamp: "Just now",
+        poolsIndexed: data.raw_data?.totalPools || 148,
+      });
 
-      setMessages((prev) => [...prev, agentMsg]);
-    } catch (err: any) {
-      setMessages((prev) => [
+      setChatHistory((prev) => [
         ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          sender: "agent",
-          content: `⚠️ Failed to execute research query: ${err.message}`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        }
+        { sender: "agent", text: reportText, time: currentTime },
       ]);
+    } catch {
+      setActiveBriefing({
+        query: userQuery,
+        report: "⚠️ Agent connection timeout. Check live on-chain connection.",
+        timestamp: "Just now",
+        poolsIndexed: 0,
+      });
     } finally {
       setIsLoading(false);
-      setActiveToolStep(null);
     }
   };
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`${activeBriefing.query}\n\n${activeBriefing.report}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#080c14] text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-200">
-      
-      {/* 🌌 Top Navigation */}
-      <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-[#080c14]/90 backdrop-blur-xl px-4 sm:px-6 py-3.5">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 ring-1 ring-white/20">
-              <Bot className="w-6 h-6 text-white" />
+    <div className="bg-[#F8F9FA] text-slate-900 flex flex-col min-h-screen">
+      {/* TOP APP HEADER */}
+      <header className="fixed top-0 inset-x-0 z-50 bg-[#F8F9FA]/90 backdrop-blur-md border-b border-slate-200/80 pt-safe">
+        <div className="h-14 px-4 flex items-center justify-between gap-3 max-w-5xl mx-auto">
+          {/* Left: Logo & Wordmark */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center text-orange-600 shadow-sm">
+              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <path
+                  d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                />
+              </svg>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-200 to-cyan-400 bg-clip-text text-transparent">
-                  DefiSense
-                </span>
-                <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/50">
-                  Agentmaxxx v1.0
-                </span>
-              </div>
-              <p className="text-xs text-slate-400">Autonomous DeFi Research & Yield Agent</p>
+            <div className="flex items-baseline gap-2">
+              <span className="font-semibold text-[15px] tracking-tight text-slate-900">
+                DefiSense
+              </span>
+              <span className="text-[11px] font-mono text-orange-600 font-medium hidden sm:inline">
+                RESEARCH
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Live Base Gas Ticker */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/90 border border-slate-800 text-xs text-slate-300">
-              <Fuel className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Base Gas:</span>
-              <span className="font-mono text-cyan-300 font-semibold">{gasGwei} Gwei</span>
+          {/* Right: Network Selector + Gas + Wallet */}
+          <div className="flex items-center gap-2">
+            {/* Gas Badge */}
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-white border border-slate-200 text-[11px] font-mono text-slate-600 shadow-sm">
+              <span className="text-orange-500">⛽</span>
+              <span className="font-semibold text-slate-800">{gasGwei}</span>
+              <span className="text-[10px] text-slate-400">Gwei</span>
             </div>
 
-            {/* Network pill */}
-            <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800 text-xs text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Block #{blockNumber ? blockNumber.toLocaleString() : "..."}</span>
-            </div>
+            {/* Network Selector Pill */}
+            <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:border-orange-300 text-[12px] font-medium text-slate-700 shadow-sm transition-colors cursor-pointer">
+              <span className="w-2 h-2 rounded-full bg-orange-500"></span>
+              <span>Base</span>
+              <span className="material-symbols-outlined text-[14px] text-slate-400">
+                expand_more
+              </span>
+            </button>
 
+            {/* Connected Wallet Pill */}
             <button
               onClick={() => setWalletConnected(!walletConnected)}
-              className={`flex items-center gap-2 text-xs font-semibold px-4 py-2 rounded-xl transition-all shadow-md ${
-                walletConnected
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-emerald-500/10"
-                  : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-cyan-500/20"
-              }`}
+              className="flex items-center gap-1.5 pl-2 pr-1.5 py-1 rounded-full bg-white border border-slate-200 hover:border-orange-300 shadow-sm transition-colors cursor-pointer"
             >
-              <Wallet className="w-4 h-4" />
-              <span>{walletConnected ? "0x742d...44e" : "Connect Wallet"}</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  walletConnected ? "bg-emerald-500" : "bg-slate-400"
+                }`}
+              ></span>
+              <span className="font-mono text-[11px] text-slate-700 font-medium">
+                {walletConnected ? "0x742d...44e" : "Connect"}
+              </span>
+              <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-[10px] text-white font-bold ml-0.5">
+                D
+              </div>
             </button>
           </div>
         </div>
       </header>
 
-      {/* 🚀 Main Content Grid */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Side: Interactive Agent Chat (8 Cols) */}
-        <div className="lg:col-span-8 flex flex-col h-[calc(100vh-140px)] rounded-2xl glass-panel-glow overflow-hidden relative border border-slate-800/80 bg-slate-950/40">
-          
-          {/* Chat Messages Stream */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex gap-3.5 ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
-              >
-                {msg.sender === "agent" && (
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center shrink-0 mt-1 shadow-sm shadow-cyan-500/10">
-                    <Bot className="w-4 h-4 text-cyan-400" />
-                  </div>
-                )}
+      {/* MAIN SCROLLABLE CONTENT */}
+      <main className="flex-1 w-full max-w-2xl mx-auto px-4 pt-20 pb-36 space-y-4">
+        {/* 1. BASE ECOSYSTEM OVERVIEW CARDS */}
+        <section className="grid grid-cols-2 gap-3 pt-1">
+          {/* Total TVL */}
+          <div
+            onClick={() => handleSendQuery("Show full Base TVL and breakdown")}
+            className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-sm hover:border-orange-300 transition-colors flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-slate-500 text-xs">
+              <span className="font-medium text-slate-600">Base TVL</span>
+              <span className="text-[10px] text-slate-400 font-mono">L2 BEAT</span>
+            </div>
+            <div className="my-1.5 flex items-baseline justify-between">
+              <span className="text-xl font-bold font-mono tracking-tight text-slate-900">
+                $9.55B
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="inline-flex items-center gap-0.5 text-emerald-600 font-mono font-medium">
+                <span className="material-symbols-outlined text-[13px]">trending_up</span> +5.4%
+                <span className="text-slate-400 text-[10px] ml-0.5">7d</span>
+              </span>
+              {/* Sparkline */}
+              <svg className="w-12 h-4 text-emerald-500" fill="none" viewBox="0 0 48 16">
+                <path
+                  d="M1 13 L10 11 L18 14 L28 7 L36 9 L47 2"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+            </div>
+          </div>
 
-                <div
-                  className={`max-w-[92%] sm:max-w-[86%] rounded-2xl p-4.5 text-sm leading-relaxed shadow-lg ${
-                    msg.sender === "user"
-                      ? "bg-gradient-to-br from-blue-600 to-cyan-600 text-white rounded-tr-sm"
-                      : "bg-slate-900/90 border border-slate-800/90 text-slate-200 rounded-tl-sm backdrop-blur-md"
+          {/* 24h DEX Volume */}
+          <div
+            onClick={() => handleSendQuery("Aerodrome DEX volume & top traded pairs")}
+            className="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-sm hover:border-orange-300 transition-colors flex flex-col justify-between cursor-pointer"
+          >
+            <div className="flex items-center justify-between text-slate-500 text-xs">
+              <span className="font-medium text-slate-600">24h DEX Volume</span>
+              <span className="text-[10px] text-slate-400 font-mono">DEFILLAMA</span>
+            </div>
+            <div className="my-1.5 flex items-baseline justify-between">
+              <span className="text-xl font-bold font-mono tracking-tight text-slate-900">
+                $540.2M
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <span className="text-slate-700 font-medium truncate">Aerodrome</span>
+              <span className="text-slate-400 font-mono text-[10px]">68.2% share</span>
+            </div>
+          </div>
+        </section>
+
+        {/* 2. INSTITUTIONAL RESEARCH BRIEFING / AI ALPHA NOTE */}
+        <article className="rounded-xl bg-white border border-slate-200/90 shadow-sm overflow-hidden">
+          {/* Card Header */}
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+            <div className="flex items-center gap-2 min-w-0">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isLoading ? "bg-amber-500 animate-ping" : "bg-orange-600"
+                }`}
+              ></div>
+              <div className="flex flex-col min-w-0">
+                <h2 className="text-sm font-semibold text-slate-900 truncate">
+                  {activeBriefing.query}
+                </h2>
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
+                  <span>{isLoading ? "Analyzing..." : activeBriefing.timestamp}</span>
+                  <span>•</span>
+                  <span>{activeBriefing.poolsIndexed} pools indexed</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => handleSendQuery("Bookmark top Base yields")}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Bookmark research note"
+              >
+                <span className="material-symbols-outlined text-[17px]">bookmark_border</span>
+              </button>
+              <button
+                onClick={handleCopy}
+                className="p-1.5 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                id="btn-copy-report"
+                title="Copy briefing"
+              >
+                <span
+                  className={`material-symbols-outlined text-[17px] ${
+                    copied ? "text-emerald-600 font-bold" : ""
                   }`}
                 >
-                  {/* Tool execution badge */}
-                  {msg.toolsUsed && msg.toolsUsed.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3 pb-2.5 border-b border-slate-800/80">
-                      {msg.toolsUsed.map((tool, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md bg-cyan-950/60 text-cyan-300 border border-cyan-800/40"
-                        >
-                          <Zap className="w-2.5 h-2.5 text-cyan-400" />
-                          {tool}
-                        </span>
-                      ))}
+                  {copied ? "check" : "share"}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Executive Briefing Text */}
+          <div className="p-4 space-y-3">
+            <div className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap font-sans">
+              {activeBriefing.report}
+            </div>
+
+            {/* Curated Yield Opportunities Table/Cards */}
+            <div className="pt-2 space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+                <span className="font-medium text-slate-700">Top Curated Opportunities</span>
+                <span className="font-mono text-[11px] text-slate-400">Ranked by Sharpe</span>
+              </div>
+
+              {/* Pool 1: Aerodrome */}
+              <div
+                onClick={() => handleSendQuery("Aerodrome WETH USDC pool analysis")}
+                className="p-3 rounded-lg bg-[#FAFBFD] border border-slate-200/90 hover:border-orange-300 transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-700 text-xs font-bold font-mono">
+                      AERO
                     </div>
-                  )}
-
-                  {/* Render Message Content with Custom Rich Formatter */}
-                  <FormattedReport content={msg.content} />
-
-                  {/* Timestamp */}
-                  <div className="mt-2 text-[10px] text-slate-500 text-right font-mono">
-                    {msg.timestamp}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-slate-900">Aerodrome</span>
+                        <span className="text-xs text-slate-500 font-mono">WETH / USDC</span>
+                      </div>
+                      <span className="text-[11px] text-slate-400">Volatile pool · 0.05% fee</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono text-xs font-semibold">
+                      41.8% APY
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Base 4.2% · AERO 37.6%
+                    </div>
                   </div>
                 </div>
-
-                {msg.sender === "user" && (
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/40 flex items-center justify-center shrink-0 mt-1">
-                    <span className="text-xs font-bold text-blue-300">YOU</span>
+                <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <span>
+                      TVL <strong className="text-slate-800 font-semibold">$1.01M</strong>
+                    </span>
+                    <span className="text-slate-300">|</span>
+                    <span>
+                      Est. IL <strong className="text-emerald-600 font-semibold">0.62%</strong>
+                    </span>
                   </div>
-                )}
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Low Risk
+                  </span>
+                </div>
               </div>
-            ))}
 
-            {/* Active Step Indicator when Loading */}
-            {isLoading && (
-              <div className="flex gap-3 items-center text-xs text-cyan-400 bg-cyan-950/40 border border-cyan-800/60 px-4 py-3 rounded-xl w-fit shadow-lg shadow-cyan-950/50 animate-pulse">
-                <Activity className="w-4 h-4 animate-spin text-cyan-400" />
-                <span>{activeToolStep || "Agent executing on-chain tools..."}</span>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Quick Prompts Bar */}
-          <div className="px-4 sm:px-6 py-2 border-t border-slate-800/60 bg-slate-950/60 flex gap-2 overflow-x-auto no-scrollbar">
-            {QUICK_PROMPTS.map((prompt, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(prompt)}
-                disabled={isLoading}
-                className="whitespace-nowrap text-xs px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-cyan-950/60 hover:text-cyan-300 border border-slate-800 hover:border-cyan-700/60 transition-all text-slate-300 shrink-0 cursor-pointer disabled:opacity-50"
+              {/* Pool 2: Uniswap V3 */}
+              <div
+                onClick={() => handleSendQuery("Uniswap V3 cbBTC ETH pool depth")}
+                className="p-3 rounded-lg bg-[#FAFBFD] border border-slate-200/90 hover:border-orange-300 transition-colors cursor-pointer"
               >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          {/* Chat Input Bar */}
-          <div className="p-4 border-t border-slate-800/80 bg-slate-900/70 backdrop-blur-lg">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              className="flex items-center gap-2"
-            >
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={inputQuery}
-                  onChange={(e) => setInputQuery(e.target.value)}
-                  placeholder="Ask DefiSense (e.g. 'Find top APY pools on Base with TVL > $100k')..."
-                  className="w-full bg-slate-950/90 border border-slate-700/80 focus:border-cyan-500 rounded-xl px-4 py-3 text-sm text-slate-100 placeholder-slate-500 outline-none transition-all shadow-inner focus:ring-1 focus:ring-cyan-500/50"
-                  disabled={isLoading}
-                />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 text-xs font-bold font-mono">
+                      UNI
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-slate-900">Uniswap V3</span>
+                        <span className="text-xs text-slate-500 font-mono">cbBTC / ETH</span>
+                      </div>
+                      <span className="text-[11px] text-slate-400">Concentrated · 0.30% fee</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-orange-700 font-mono text-xs font-semibold">
+                      28.4% APY
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Fees 22.1% · Merkl 6.3%
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <span>
+                      TVL <strong className="text-slate-800 font-semibold">$3.84M</strong>
+                    </span>
+                    <span className="text-slate-300">|</span>
+                    <span>
+                      Est. IL <strong className="text-amber-600 font-semibold">1.14%</strong>
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Med Risk
+                  </span>
+                </div>
               </div>
 
+              {/* Pool 3: ExtraFi */}
+              <div
+                onClick={() => handleSendQuery("Extra Finance USDC Vault yields and utilization")}
+                className="p-3 rounded-lg bg-[#FAFBFD] border border-slate-200/90 hover:border-orange-300 transition-colors cursor-pointer"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700 text-xs font-bold font-mono">
+                      EXT
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-semibold text-slate-900">ExtraFi</span>
+                        <span className="text-xs text-slate-500 font-mono">USDC Vault</span>
+                      </div>
+                      <span className="text-[11px] text-slate-400">Leveraged lending strategy</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="inline-flex items-center px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200 text-purple-700 font-mono text-xs font-semibold">
+                      38.2% APY
+                    </div>
+                    <div className="text-[10px] text-slate-400 font-mono mt-0.5">
+                      Base 12.0% + Borr. yield
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center justify-between text-xs font-mono">
+                  <div className="flex items-center gap-3 text-slate-500">
+                    <span>
+                      TVL <strong className="text-slate-800 font-semibold">$412.8K</strong>
+                    </span>
+                    <span className="text-slate-300">|</span>
+                    <span>
+                      Util. <strong className="text-slate-800 font-semibold">89.4%</strong>
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> High Risk
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        {/* 3. PROTOCOL RADAR / LEADERBOARD */}
+        <section className="rounded-xl bg-white border border-slate-200/90 shadow-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-[18px] text-orange-600">
+                leaderboard
+              </span>
+              <h3 className="text-sm font-semibold text-slate-900">Base Protocol Radar</h3>
+            </div>
+            <span className="text-[11px] font-mono text-slate-500">Sorted by TVL</span>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {/* Item 1: Morpho */}
+            <div className="p-3.5 flex items-center justify-between hover:bg-slate-50/70 transition-colors">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-5 text-center font-mono text-xs text-slate-400 font-semibold">
+                  1
+                </span>
+                <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center font-bold text-xs text-orange-600 font-mono">
+                  M
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-slate-900 truncate">
+                      Morpho Blue
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-mono">
+                      Lending
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">
+                    $4.45B TVL{" "}
+                    <span className="text-emerald-600 ml-1 font-semibold">+2.5%</span>
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => handleSendQuery("Analyze Morpho Blue on Base")}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 border border-transparent text-xs font-medium text-slate-700 transition-colors cursor-pointer"
+              >
+                View
+              </button>
+            </div>
+
+            {/* Item 2: Aerodrome */}
+            <div className="p-3.5 flex items-center justify-between hover:bg-slate-50/70 transition-colors">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-5 text-center font-mono text-xs text-slate-400 font-semibold">
+                  2
+                </span>
+                <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-200 flex items-center justify-center font-bold text-xs text-orange-600 font-mono">
+                  A
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-slate-900 truncate">
+                      Aerodrome
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-mono">
+                      DEX
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">
+                    $1.12B TVL{" "}
+                    <span className="text-emerald-600 ml-1 font-semibold">+6.8%</span>
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => handleSendQuery("Aerodrome DEX liquidity pools & volume")}
+                className="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-xs font-medium text-white shadow-sm transition-colors cursor-pointer"
+              >
+                Trade
+              </button>
+            </div>
+
+            {/* Item 3: Aave V3 */}
+            <div className="p-3.5 flex items-center justify-between hover:bg-slate-50/70 transition-colors">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-5 text-center font-mono text-xs text-slate-400 font-semibold">
+                  3
+                </span>
+                <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-xs text-slate-700 font-mono">
+                  A3
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-semibold text-slate-900 truncate">
+                      Aave V3
+                    </span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-mono">
+                      Markets
+                    </span>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">
+                    $553.1M TVL{" "}
+                    <span className="text-emerald-600 ml-1 font-semibold">+1.9%</span>
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => handleSendQuery("Aave V3 Base lending and borrow APYs")}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 border border-transparent text-xs font-medium text-slate-700 transition-colors cursor-pointer"
+              >
+                View
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. QUICK RESEARCH QUERIES CHIPS */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 text-xs">
+          {[
+            "Top stablecoin yields",
+            "cbBTC impermanent loss",
+            "Whale inflows > $500k",
+            "Aero gauge votes",
+            "Check Base gas & block",
+          ].map((chip, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSendQuery(chip)}
+              disabled={isLoading}
+              className="chip-query flex-shrink-0 px-3 py-1.5 rounded-lg bg-white border border-slate-200/90 hover:border-orange-300 hover:text-orange-600 text-slate-700 font-medium shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      </main>
+
+      {/* DOCKED SEARCH & CHAT BAR (Sticky above bottom nav) */}
+      <div className="fixed bottom-16 inset-x-0 z-40 px-4 pb-2 pt-1 bg-gradient-to-t from-[#F8F9FA] via-[#F8F9FA]/95 to-transparent pointer-events-none">
+        <div className="max-w-2xl mx-auto pointer-events-auto">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSendQuery();
+            }}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-slate-200 shadow-md backdrop-blur-md focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 transition-all"
+          >
+            <span className="material-symbols-outlined text-slate-400 text-[18px]">
+              search
+            </span>
+            <input
+              type="text"
+              value={inputQuery}
+              onChange={(e) => setInputQuery(e.target.value)}
+              placeholder={
+                isLoading
+                  ? "Scanning on-chain indexes & computing risk..."
+                  : "Ask about Base yields, protocol risks, or whale flows..."
+              }
+              disabled={isLoading}
+              className="flex-1 bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none"
+            />
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleSendQuery("Check Base gas and block height")}
+                className="p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                title="Gas & block query"
+              >
+                <span className="material-symbols-outlined text-[18px]">tune</span>
+              </button>
               <button
                 type="submit"
                 disabled={isLoading || !inputQuery.trim()}
-                className="px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-40 disabled:cursor-not-allowed font-medium text-sm text-white flex items-center gap-2 shadow-md shadow-cyan-500/20 transition-all cursor-pointer"
+                className="w-7 h-7 rounded-lg bg-orange-600 hover:bg-orange-500 disabled:opacity-40 text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                id="btn-send"
               >
-                <span>Send</span>
-                <Send className="w-4 h-4" />
+                <span className="material-symbols-outlined text-[15px]">arrow_upward</span>
               </button>
-            </form>
-          </div>
+            </div>
+          </form>
         </div>
+      </div>
 
-        {/* Right Side: Live Protocol Intelligence Panel (4 Cols) */}
-        <div className="lg:col-span-4 flex flex-col gap-6">
-          
-          {/* Base Ecosystem Live Stats */}
-          <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-cyan-400" />
-                <h3 className="font-semibold text-sm text-slate-100">Base Ecosystem Pulse</h3>
-              </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40 animate-pulse">
-                LIVE
-              </span>
-            </div>
+      {/* BOTTOM TAB BAR NAVIGATION */}
+      <nav className="fixed bottom-0 inset-x-0 z-50 bg-white/95 border-t border-slate-200 backdrop-blur-md pb-safe shadow-sm">
+        <div className="max-w-md mx-auto h-16 flex items-center justify-around px-2">
+          {/* Tab 1: Terminal / Home (Active) */}
+          <button
+            onClick={() => setActiveTab("terminal")}
+            className={`flex flex-col items-center justify-center gap-0.5 w-16 h-12 transition-colors font-medium cursor-pointer ${
+              activeTab === "terminal" ? "text-orange-600" : "text-slate-400 hover:text-slate-700"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">terminal</span>
+            <span className="text-[10px] font-semibold tracking-tight">Terminal</span>
+          </button>
 
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
-                <span className="text-xs text-slate-400">Total TVL (Base)</span>
-                <div className="text-lg font-bold text-slate-100 mt-1">$9.55B</div>
-                <span className="text-[10px] text-emerald-400 font-mono">+5.4% 7d</span>
-              </div>
-              <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
-                <span className="text-xs text-slate-400">24h DEX Volume</span>
-                <div className="text-lg font-bold text-slate-100 mt-1">$540M</div>
-                <span className="text-[10px] text-cyan-400 font-mono">Aerodrome #1</span>
-              </div>
-            </div>
+          {/* Tab 2: Radar */}
+          <button
+            onClick={() => {
+              setActiveTab("radar");
+              handleSendQuery("Show top Base protocols ranked by TVL");
+            }}
+            className={`flex flex-col items-center justify-center gap-0.5 w-16 h-12 transition-colors cursor-pointer ${
+              activeTab === "radar" ? "text-orange-600 font-semibold" : "text-slate-400 hover:text-slate-700"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">radar</span>
+            <span className="text-[10px] font-medium tracking-tight">Radar</span>
+          </button>
 
-            <div className="space-y-2.5">
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Top Base Protocols</span>
-              
-              <div 
-                onClick={() => handleSend("Analyze Morpho Blue on Base")}
-                className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-cyan-800/60 hover:bg-slate-800/40 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs font-bold">M</div>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-200">Morpho Blue</div>
-                    <div className="text-[10px] text-slate-400">Lending Market</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-slate-200">$4.45B</div>
-                  <div className="text-[10px] text-emerald-400 font-mono">+2.5%</div>
-                </div>
-              </div>
+          {/* Tab 3: Yields */}
+          <button
+            onClick={() => {
+              setActiveTab("yields");
+              handleSendQuery("Show highest APY yield pools on Base");
+            }}
+            className={`flex flex-col items-center justify-center gap-0.5 w-16 h-12 transition-colors cursor-pointer ${
+              activeTab === "yields" ? "text-orange-600 font-semibold" : "text-slate-400 hover:text-slate-700"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">trending_up</span>
+            <span className="text-[10px] font-medium tracking-tight">Yields</span>
+          </button>
 
-              <div 
-                onClick={() => handleSend("Aerodrome yield analysis and pools")}
-                className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-cyan-800/60 hover:bg-slate-800/40 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">A</div>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-200">Aerodrome</div>
-                    <div className="text-[10px] text-slate-400">DEX / ve(3,3) AMM</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-slate-200">$1.12B</div>
-                  <div className="text-[10px] text-emerald-400 font-mono">+6.8%</div>
-                </div>
-              </div>
-
-              <div 
-                onClick={() => handleSend("Aave V3 Base lending rates")}
-                className="flex items-center justify-between p-2.5 rounded-lg bg-slate-900/60 border border-slate-800 hover:border-cyan-800/60 hover:bg-slate-800/40 transition-all cursor-pointer"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center text-xs font-bold">A</div>
-                  <div>
-                    <div className="text-xs font-semibold text-slate-200">Aave V3</div>
-                    <div className="text-[10px] text-slate-400">Money Market</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-xs font-bold text-slate-200">$553M</div>
-                  <div className="text-[10px] text-emerald-400 font-mono">+1.9%</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Active Agent Capabilities */}
-          <div className="glass-panel p-5 rounded-2xl border border-slate-800 bg-slate-900/40">
-            <div className="flex items-center gap-2 mb-3">
-              <Layers className="w-5 h-5 text-indigo-400" />
-              <h3 className="font-semibold text-sm text-slate-100">Integrated Agent Tools</h3>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-300">DeFi Llama Yields & TVL</span>
-                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Connected
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-300">Base RPC Live Gas Tracker</span>
-                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Connected
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-300">QuantPulse Risk Engine</span>
-                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Active
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/60 border border-slate-800">
-                <span className="text-slate-300">Dexscreener Base Pairs</span>
-                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Connected
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/60 border border-slate-800 opacity-60">
-                <span className="text-slate-300">Uniswap V3 On-Chain Swaps</span>
-                <span className="text-[10px] text-cyan-400 font-mono">Week 3 Sprint</span>
-              </div>
-            </div>
-          </div>
-
+          {/* Tab 4: Alerts */}
+          <button
+            onClick={() => {
+              setActiveTab("alerts");
+              handleSendQuery("Check current Base gas price and network status");
+            }}
+            className={`flex flex-col items-center justify-center gap-0.5 w-16 h-12 transition-colors cursor-pointer ${
+              activeTab === "alerts" ? "text-orange-600 font-semibold" : "text-slate-400 hover:text-slate-700"
+            }`}
+          >
+            <span className="material-symbols-outlined text-[22px]">notifications</span>
+            <span className="text-[10px] font-medium tracking-tight">Alerts</span>
+          </button>
         </div>
-
-      </main>
+      </nav>
     </div>
   );
 }
