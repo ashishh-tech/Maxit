@@ -9,6 +9,7 @@
 [![Python 3.12](https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16_App_Router-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Netlify](https://img.shields.io/badge/Live_Demo-agenticmaxai.netlify.app-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://agenticmaxai.netlify.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](./LICENSE)
 
 <p align="center">
@@ -229,6 +230,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to interact 
 DefiSense evolved from an initial single-prompt prototype into a full-fledged, multi-tool autonomous DeFi research cockpit with real-time on-chain execution and dynamic risk modeling.
 
 - **GitHub Repository**: [https://github.com/ashishh-tech/Maxit](https://github.com/ashishh-tech/Maxit)
+- **🌐 Live Demo**: [https://agenticmaxai.netlify.app](https://agenticmaxai.netlify.app) ← deployed on Netlify
 - **Live Experimentation Log**: [docs/EXPERIMENTATION_LOG.md](./docs/EXPERIMENTATION_LOG.md) (10 recorded experiments across APIs, workflows, and risk formulas)
 
 ### 🔬 New Capabilities & Workflows Added in Week 2
