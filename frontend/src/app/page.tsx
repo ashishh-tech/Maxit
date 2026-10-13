@@ -17,6 +17,7 @@ interface Message {
 
 export default function DefiSenseApp() {
   const [activeTab, setActiveTab] = useState<"terminal" | "radar" | "yields" | "alerts">("terminal");
+  const [mounted, setMounted] = useState(false);
   const [inputQuery, setInputQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -71,6 +72,10 @@ export default function DefiSenseApp() {
     fetchGas();
     const interval = setInterval(fetchGas, 12000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -164,6 +169,17 @@ export default function DefiSenseApp() {
       ? allProtocols
       : allProtocols.filter((p) => p.category.toLowerCase() === radarFilter.toLowerCase());
 
+  if (!mounted) {
+    return (
+      <div className="bg-[#F8F9FA] text-slate-900 flex flex-col min-h-screen items-center justify-center">
+        <div className="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-white border border-slate-200 shadow-sm text-slate-700 font-mono text-xs">
+          <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
+          <span>DefiSense Cockpit Initializing...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-[#F8F9FA] text-slate-900 flex flex-col min-h-screen">
       {/* TOP APP HEADER */}
@@ -203,7 +219,11 @@ export default function DefiSenseApp() {
             </div>
 
             {/* Network Selector Pill */}
-            <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:border-orange-300 text-[12px] font-medium text-slate-700 shadow-sm transition-colors cursor-pointer">
+            <button
+              type="button"
+              suppressHydrationWarning
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white border border-slate-200 hover:border-orange-300 text-[12px] font-medium text-slate-700 shadow-sm transition-colors cursor-pointer"
+            >
               <span className="w-2 h-2 rounded-full bg-orange-500"></span>
               <span>Base</span>
               <span className="material-symbols-outlined text-[14px] text-slate-400">
@@ -213,6 +233,8 @@ export default function DefiSenseApp() {
 
             {/* Connected Wallet Pill */}
             <button
+              type="button"
+              suppressHydrationWarning
               onClick={() => setWalletConnected(!walletConnected)}
               className="flex items-center gap-1.5 pl-2 pr-1.5 py-1 rounded-full bg-white border border-slate-200 hover:border-orange-300 shadow-sm transition-colors cursor-pointer"
             >
