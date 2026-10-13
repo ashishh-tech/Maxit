@@ -223,12 +223,55 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to interact 
 
 ---
 
-## 🧪 Hackathon Evaluation
+## 🧪 Hackathon Submission & Walkthrough (Week 2 Sprint)
 
-### Track & Focus
-- **Hackathon**: [Agentmaxxx Hackathon](https://github.com/ashishh-tech/Maxit)
-- **Track**: AI Agents on Base L2
-- **Experimentation Log**: Detailed records in [`docs/EXPERIMENTATION_LOG.md`](./docs/EXPERIMENTATION_LOG.md) documenting hypotheses, API benchmark findings, and risk formula calibrations.
+### 🎯 Mission: Taking the Agent Further (Deadline: October 16)
+DefiSense evolved from an initial single-prompt prototype into a full-fledged, multi-tool autonomous DeFi research cockpit with real-time on-chain execution and dynamic risk modeling.
+
+- **GitHub Repository**: [https://github.com/ashishh-tech/Maxit](https://github.com/ashishh-tech/Maxit)
+- **Live Experimentation Log**: [docs/EXPERIMENTATION_LOG.md](./docs/EXPERIMENTATION_LOG.md) (10 recorded experiments across APIs, workflows, and risk formulas)
+
+### 🔬 New Capabilities & Workflows Added in Week 2
+1. **Dynamic Intent Routing Workflow**: Automatically classifies prompts across Gas, Yields, Stablecoins, and DEX Comparisons, orchestrating targeted tool subsets instead of hitting redundant endpoints.
+2. **Interactive QuantPulse™ IL Simulator**: Real-time divergence shock testing ($k$-ratio slider from $0.1\times$ to $5.0\times$) backed by AMM divergence mathematics.
+3. **Dual-Tier Resilient Architecture**: Seamless fallback between local Python FastAPI backend (`localhost:8000`) and native edge serverless synthesis with zero downtime.
+4. **Live Base L2 Ticker & Pulse**: 12-second continuous on-chain gas tracking (in Gwei) and block monitoring directly via Base RPC.
+5. **Multi-View Intelligence Cockpit**: 4 purpose-built interfaces:
+   - **Terminal**: Interactive agent conversation with pre-configured alpha prompts and rich markdown rendering.
+   - **Risk Radar**: QuantPulse risk scoring breakdown and live Impermanent Loss divergence simulator.
+   - **Yield Screener**: Live indexed pools on Base with TVL depth and risk tier badges.
+   - **Real-Time Alerts**: Network congestion notices, whale movements, and depeg warning monitors.
+
+---
+
+### 🎬 Demo & Walkthrough Guide
+
+#### Option A: Quick Terminal CLI Walkthrough
+```bash
+# Activate virtual environment
+.\venv\Scripts\activate   # Windows (or source venv/bin/activate on Linux/macOS)
+
+# 1. Test live gas & yield pools
+python agent/cli.py "Check Base gas and top APY"
+
+# 2. Test stablecoin-focused yield strategy
+python agent/cli.py "Find safe stablecoin pools on Base"
+
+# 3. Test DEX protocol comparison
+python agent/cli.py "Compare Aerodrome vs Uniswap V3"
+```
+
+#### Option B: Full Glassmorphic Web Cockpit Walkthrough
+```bash
+cd frontend
+npm install
+npm run dev
+```
+1. Open [http://localhost:3000](http://localhost:3000).
+2. **Terminal Tab**: Click any quick-prompt chip (e.g., *"Gas & Network Status"* or *"Aerodrome vs Uniswap"*), or type a custom question. Watch the agent stream live on-chain analytics.
+3. **Radar Tab**: Adjust the **Price Divergence ($k$)** slider to simulate market shocks (e.g., $1.5\times$ or $3.0\times$) and observe mathematical Impermanent Loss curve projections in real time.
+4. **Yields Tab**: Inspect live Base liquidity pools with categorized risk scores (Low/Medium/High) and TVL depth.
+5. **Alerts Tab**: Review network state, Base gas in Gwei, and proactive automated warning thresholds.
 
 ---
 

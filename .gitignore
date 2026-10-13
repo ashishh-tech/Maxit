@@ -33,3 +33,6 @@ Thumbs.db
 coverage/
 .coverage
 htmlcov/
+
+# Local Netlify folder
+.netlify

@@ -1,7 +1,10 @@
 import os
 import json
+import warnings
 from typing import Dict, Any, List, Optional
 from dotenv import load_dotenv
+
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 from agent.tools.defi_llama import DefiLlamaTool
 from agent.tools.coingecko import CoinGeckoTool
