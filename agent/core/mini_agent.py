@@ -32,7 +32,7 @@ class DefiSenseMiniAgent:
         prompt_lower = user_prompt.lower()
 
         # Step 1: Detect Intent
-        is_yield_query = any(k in prompt_lower for k in ["yield", "apy", "earn", "pool", "farm", "interest"])
+        is_yield_query = any(k in prompt_lower for k in ["yield", "apy", "earn", "pool", "farm", "interest", "stable", "stablecoin", "usdc", "usdt", "safe", "conservative"])
         is_protocol_query = any(k in prompt_lower for k in ["tvl", "protocol", "volume", "aerodrome", "uniswap", "moonwell", "aave"])
         is_price_query = any(k in prompt_lower for k in ["price", "market", "token", "worth", "cost"])
         is_network_query = any(k in prompt_lower for k in ["gas", "block", "rpc", "base sepolia", "network"])
