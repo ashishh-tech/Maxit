@@ -367,8 +367,8 @@ DefiSense enables natural language crypto transfers directly from the agent's wa
 ## 🎥 Demo Video Links
 Following the official submission format:
 - **Week 1 (`defisense.v1`)**: [Week 1 Prototype Demo Video](https://github.com/ashishh-tech/Maxit)
-- **Week 2 (`defisense.v2`)**: [Week 2 Demo Video with Voiceover](https://github.com/ashishh-tech/Maxit)
-- **Week 3 (`defisense.v3`)**: [Week 3 Demo Video with Voiceover](https://github.com/ashishh-tech/Maxit)
+- **Week 2 (`defisense.v2`)**: [https://youtu.be/itqAC2CK4x8](https://youtu.be/itqAC2CK4x8)
+- **Week 3 (`defisense.v3`)**: [https://youtu.be/4W3BllfwnXk](https://youtu.be/4W3BllfwnXk)
 
 ---
 
