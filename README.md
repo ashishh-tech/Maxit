@@ -72,10 +72,11 @@ Instead of manually navigating fragmented DEX interfaces, dashboards, and APR tr
 | **🌾 Live Yield Intelligence** | Queries real-time pools across Aerodrome, Uniswap V3, Moonwell, and Seamless with TVL > $50k | ✅ Active |
 | **🛡️ QuantPulse Risk Engine** | Mathematical Impermanent Loss divergence calculation + composite risk rating (0–100) | ✅ Active |
 | **⚡ Base Sepolia On-Chain RPC** | Queries live block numbers, gas tracker in Gwei, and wallet balances via `web3.py` | ✅ Active |
-| **💬 Glassmorphic Web3 UI** | Next.js 16 frontend with dark-mode neon aesthetics, interactive chat, and live Base pulse | ✅ Active |
+| **👛 On-Chain Agent Wallet** | Autonomous Base Sepolia wallet (`0xcc40f8...3a1e`) with ETH & USDC balance tracking and transfer execution | ✅ Active |
+| **💳 x402 Micropayments** | HTTP 402 payment challenge & settlement via Coinbase facilitator for premium AI research ($0.01 USDC) | ✅ Active |
+| **💬 Glassmorphic Web3 Cockpit** | Next.js 16 frontend with interactive Terminal, Risk Radar, Yield Screener, Alerts, and Wallet tabs | ✅ Active |
 | **🧠 Multi-Turn Memory** | Tracks user conversation history, preferred tokens, and risk tolerance across prompts | ✅ Active |
-| **💱 On-Chain Swap Execution** | Uniswap V3 automated swap preparation and execution on Base Sepolia | 🚧 Week 3 Sprint |
-| **💳 x402 Micropayments** | Micro-fee protocol for premium AI research and alpha generation | 🚧 Week 3 Sprint |
+| **💱 On-Chain Swap Execution** | Uniswap V3 automated swap preparation on Base Sepolia | 🚧 Week 4 Roadmap |
 
 ---
 
@@ -238,11 +239,48 @@ DefiSense evolved from an initial single-prompt prototype into a full-fledged, m
 2. **Interactive QuantPulse™ IL Simulator**: Real-time divergence shock testing ($k$-ratio slider from $0.1\times$ to $5.0\times$) backed by AMM divergence mathematics.
 3. **Dual-Tier Resilient Architecture**: Seamless fallback between local Python FastAPI backend (`localhost:8000`) and native edge serverless synthesis with zero downtime.
 4. **Live Base L2 Ticker & Pulse**: 12-second continuous on-chain gas tracking (in Gwei) and block monitoring directly via Base RPC.
-5. **Multi-View Intelligence Cockpit**: 4 purpose-built interfaces:
+5. **Multi-View Intelligence Cockpit**: 5 purpose-built interfaces:
    - **Terminal**: Interactive agent conversation with pre-configured alpha prompts and rich markdown rendering.
    - **Risk Radar**: QuantPulse risk scoring breakdown and live Impermanent Loss divergence simulator.
    - **Yield Screener**: Live indexed pools on Base with TVL depth and risk tier badges.
    - **Real-Time Alerts**: Network congestion notices, whale movements, and depeg warning monitors.
+   - **Agent Wallet & x402**: Autonomous on-chain identity (`0xcc40f8...3a1e`), live ETH/USDC balances, on-chain transfers, and interactive HTTP 402 paywall inspector.
+
+---
+
+## 👛 Week 3: "Give It A Wallet" & x402 Micropayments
+
+### Why Crypto Actually Makes Sense for DefiSense
+Autonomous AI agents in DeFi cannot rely on human credit cards or fiat payment rails. DefiSense incorporates crypto natively for two essential capabilities:
+1. **Machine-to-Machine Monetization (`x402`)**: DefiSense gates high-compute quantitative research behind the open `x402` standard. When external clients, agents, or aggregators request deep alpha analysis, DefiSense issues an `HTTP 402 Payment Required` challenge, verifying $0.01 USDC micropayments settled via the Coinbase facilitator.
+2. **Autonomous On-Chain Execution**: With its own Base Sepolia private key, DefiSense can independently check balances, execute rebalancing transactions, and sign EIP-712 payment permits.
+
+### Agent Wallet Specifications
+- **Target Network**: Base Sepolia L2 (Chain ID: `84532`)
+- **Agent Public Address**: `0xcc40f8B1B95CC6d86ba84Bee37932Fe419a03a1e`
+- **Supported Assets**: Native ETH (gas) & Circle Testnet USDC (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`)
+- **Key Management**: Managed via `AGENT_PRIVATE_KEY` in `.env` with fallback ephemeral generation.
+
+### The x402 Flow Diagram
+```
+Client Agent                                                DefiSense Agent
+     │                                                             │
+     ├─── 1. POST /api/premium-research (no headers) ──────────────►│
+     │                                                             │
+     │◄── 2. HTTP 402 Payment Required + Challenge JSON ───────────┤
+     │       (amount: $0.01 USDC, token: USDC, payTo: Agent)       │
+     │                                                             │
+     │─── 3. Client signs EIP-712 permit for USDC                  │
+     │                                                             │
+     ├─── 4. POST /api/premium-research with X-PAYMENT header ─────►│
+     │                                                             │
+     │                                     ┌───────────────────────┴───┐
+     │                                     │ Verify signature via      │
+     │                                     │ Coinbase facilitator      │
+     │                                     └───────────────────────┬───┘
+     │                                                             │
+     │◄── 5. HTTP 200 OK + Verified Premium AI Research Report ────┤
+```
 
 ---
 
@@ -253,14 +291,17 @@ DefiSense evolved from an initial single-prompt prototype into a full-fledged, m
 # Activate virtual environment
 .\venv\Scripts\activate   # Windows (or source venv/bin/activate on Linux/macOS)
 
-# 1. Test live gas & yield pools
-python agent/cli.py "Check Base gas and top APY"
+# 1. Test agent wallet status & on-chain identity
+python -c "from agent.tools.wallet import AgentWallet; w = AgentWallet(); print(w.get_wallet_info())"
 
-# 2. Test stablecoin-focused yield strategy
+# 2. Test natural language wallet query
+python agent/cli.py "Check DefiSense agent wallet balance and address"
+
+# 3. Test stablecoin-focused yield strategy
 python agent/cli.py "Find safe stablecoin pools on Base"
 
-# 3. Test DEX protocol comparison
-python agent/cli.py "Compare Aerodrome vs Uniswap V3"
+# 4. Start FastAPI server with wallet & x402 endpoints
+python -m uvicorn agent.server:app --reload --port 8000
 ```
 
 #### Option B: Full Glassmorphic Web Cockpit Walkthrough
@@ -270,10 +311,12 @@ npm install
 npm run dev
 ```
 1. Open [http://localhost:3000](http://localhost:3000).
-2. **Terminal Tab**: Click any quick-prompt chip (e.g., *"Gas & Network Status"* or *"Aerodrome vs Uniswap"*), or type a custom question. Watch the agent stream live on-chain analytics.
-3. **Radar Tab**: Adjust the **Price Divergence ($k$)** slider to simulate market shocks (e.g., $1.5\times$ or $3.0\times$) and observe mathematical Impermanent Loss curve projections in real time.
-4. **Yields Tab**: Inspect live Base liquidity pools with categorized risk scores (Low/Medium/High) and TVL depth.
-5. **Alerts Tab**: Review network state, Base gas in Gwei, and proactive automated warning thresholds.
+2. **Terminal Tab**: Click any quick-prompt chip or ask about the agent wallet. Watch the agent stream live on-chain analytics.
+3. **Radar Tab**: Adjust the **Price Divergence ($k$)** slider to simulate market shocks and observe mathematical Impermanent Loss projections.
+4. **Yields Tab**: Inspect live Base liquidity pools with categorized risk scores and TVL depth.
+5. **Alerts Tab**: Review network state, Base gas in Gwei, and tool connectivity matrix.
+6. **Wallet Tab**: Inspect DefiSense's Base Sepolia on-chain address, live ETH/USDC balances, copy address, view on Basescan, and click **"Simulate 402 Challenge"** to inspect the live x402 protocol challenge!
+
 
 ---
 

@@ -11,6 +11,7 @@ from agent.tools.coingecko import CoinGeckoTool
 from agent.tools.dexscreener import DexscreenerTool
 from agent.tools.risk_engine import RiskEngine
 from agent.tools.base_rpc import BaseRpcTool
+from agent.tools.wallet import AgentWallet
 from agent.core.memory import AgentMemory
 
 load_dotenv()
@@ -24,6 +25,7 @@ class DefiSenseMiniAgent:
         self.dexscreener = DexscreenerTool()
         self.risk_engine = RiskEngine()
         self.base_rpc = BaseRpcTool()
+        self.wallet = AgentWallet()
         self.memory = AgentMemory()
         self.api_key = os.getenv("GEMINI_API_KEY")
 
@@ -36,6 +38,7 @@ class DefiSenseMiniAgent:
         is_protocol_query = any(k in prompt_lower for k in ["tvl", "protocol", "volume", "aerodrome", "uniswap", "moonwell", "aave"])
         is_price_query = any(k in prompt_lower for k in ["price", "market", "token", "worth", "cost"])
         is_network_query = any(k in prompt_lower for k in ["gas", "block", "rpc", "base sepolia", "network"])
+        is_wallet_query = any(k in prompt_lower for k in ["wallet", "balance", "address", "agent wallet", "eth balance", "usdc balance", "paywall", "x402", "funds"])
         chain = "Base"
 
         context_data: Dict[str, Any] = {
@@ -45,10 +48,13 @@ class DefiSenseMiniAgent:
         }
 
         # Step 2: Query Tools
+        if is_wallet_query:
+            context_data["agent_wallet"] = self.wallet.get_wallet_info()
+
         if is_network_query or "gas" in prompt_lower:
             context_data["network_stats"] = self.base_rpc.get_network_stats()
 
-        if is_yield_query or (not is_protocol_query and not is_price_query and not is_network_query):
+        if is_yield_query or (not is_protocol_query and not is_price_query and not is_network_query and not is_wallet_query):
             pools = self.defi_llama.get_yield_pools(chain=chain, limit=8)
             # Enrich each pool with RiskEngine scoring
             enriched_pools = []
@@ -65,7 +71,7 @@ class DefiSenseMiniAgent:
                 enriched_pools.append(p)
             context_data["yield_pools"] = enriched_pools
 
-        if is_protocol_query or not is_yield_query:
+        if is_protocol_query or (not is_yield_query and not is_wallet_query):
             context_data["top_protocols"] = self.defi_llama.get_top_protocols_by_chain(chain=chain, limit=6)
 
         if is_price_query or "token" in prompt_lower or "price" in prompt_lower:
@@ -77,6 +83,8 @@ class DefiSenseMiniAgent:
 
         # Step 4: Record interaction in memory
         tools_used = ["DeFi Llama", "Risk Engine", "Dexscreener"]
+        if is_wallet_query:
+            tools_used.append("Agent Wallet (Base Sepolia)")
         if is_network_query:
             tools_used.append("Base Sepolia RPC")
         self.memory.add_interaction(user_prompt, report, tools_used)
@@ -117,6 +125,26 @@ class DefiSenseMiniAgent:
         pools = context.get("yield_pools", [])
         protocols = context.get("top_protocols", [])
         network = context.get("network_stats", {})
+        wallet_info = context.get("agent_wallet")
+
+        if wallet_info:
+            return "\n".join([
+                f"# 👛 DefiSense On-Chain Agent Wallet Report",
+                f"**Network**: {wallet_info.get('network', 'Base Sepolia')} (Chain ID: {wallet_info.get('chain_id', 84532)})\n",
+                "## 🔐 Wallet Identity & Balances",
+                f"- **Agent Address**: `{wallet_info.get('address')}`",
+                f"- **ETH Balance**: `{wallet_info.get('eth_balance')} ETH`",
+                f"- **USDC Balance**: `${wallet_info.get('usdc_balance')} USDC`",
+                f"- **RPC Status**: `{'Connected' if wallet_info.get('connected') else 'Disconnected'}`",
+                f"- **Basescan Explorer**: [View on Sepolia Basescan]({wallet_info.get('explorer_url')})",
+                "\n## 💳 x402 Micropayment Protocol Integration",
+                "- **Paywall Status**: `Active` (Base Sepolia USDC)",
+                f"- **Payee Address**: `{wallet_info.get('address')}`",
+                "- **Price per Premium Query**: `$0.01 USDC`",
+                "\n## 💡 Funding & Usage Guidance",
+                "- To test transactions, send Base Sepolia test ETH or USDC to the agent's address above.",
+                "- To access gated intelligence, submit payment authorization headers to `/api/premium-research`."
+            ])
 
         lines = [
             f"# ⚡ DefiSense Intelligence Report: {query.strip()}",

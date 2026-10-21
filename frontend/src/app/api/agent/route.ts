@@ -236,6 +236,7 @@ export async function POST(req: Request) {
     }
 
     // Step 1: Intent Classification
+    const isWalletQuery = /wallet|balance|address|agent wallet|eth balance|usdc balance|x402|paywall|identity/i.test(qLower);
     const isGasQuery = /gas|block|rpc|fee|network|sepolia|tps/i.test(qLower);
     const isProtocolQuery = /protocol|tvl|top protocols|volume|market share|ranking|leaderboard/i.test(qLower);
     const isStableQuery = /stable|stablecoin|usdc|usdt|dai|safe|conservative|low risk/i.test(qLower);
@@ -252,7 +253,36 @@ export async function POST(req: Request) {
     const rawData: Record<string, any> = { rpcState, protocolsCount: protocols.length, totalPools: allPools.length };
 
     // Step 3: Targeted Synthesis based on Intent
-    if (isGasQuery) {
+    if (isWalletQuery) {
+      const agentAddress = process.env.AGENT_WALLET_ADDRESS || "0xcc40f8B1B95CC6d86ba84Bee37932Fe419a03a1e";
+      report = `# 👛 DefiSense On-Chain Agent Wallet & x402 Report
+**Network**: Base Sepolia (Chain ID: 84532) | **RPC**: \`https://sepolia.base.org\`
+
+## 🔐 Agent Wallet Identity
+- **Address**: \`${agentAddress}\`
+- **Network Status**: Connected to Base Sepolia L2 (Latest Block: \`#${rpcState.blockNumber.toLocaleString()}\`)
+- **Estimated ETH Balance**: \`0.0000 ETH\` (Testnet)
+- **Estimated USDC Balance**: \`$0.00 USDC\`
+- **Basescan Explorer**: [View on Sepolia Basescan](https://sepolia.basescan.org/address/${agentAddress})
+
+## 💳 x402 Micropayment Protocol
+- **Paywall Status**: Active on \`/api/premium-research\`
+- **Payee Address**: \`${agentAddress}\`
+- **Standard Fee**: \`$0.01 USDC\` (Circle Testnet USDC on Base Sepolia)
+- **Facilitator**: Coinbase x402 Facilitator Protocol
+
+## 💡 Quick Actions
+- Fund the agent with testnet ETH at [Base Sepolia Faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet).
+- Test x402 paywall challenge via the **Wallet** tab in the dashboard.`;
+      rawData.wallet = {
+        address: agentAddress,
+        network: "Base Sepolia",
+        chainId: 84532,
+        eth_balance: 0.0,
+        usdc_balance: 0.0,
+        explorer: `https://sepolia.basescan.org/address/${agentAddress}`,
+      };
+    } else if (isGasQuery) {
       report = `# ⚡ Base Network Status & Gas Intelligence Report
 **Target Chain**: Base L2 | **Status**: Live RPC Query Connected
 
