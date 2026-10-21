@@ -320,6 +320,65 @@ npm run dev
 
 ---
 
+## 🤖 Supported AI Models & Orchestration
+- **Google Gemini 1.5 Flash (`gemini-1.5-flash`)**: High-throughput natural language intent extraction, semantic query parsing, and rapid protocol synthesis.
+- **Google Gemini 1.5 Pro (`gemini-1.5-pro`)**: Deep quantitative DeFi research, multi-factor alpha thesis formulation, and complex financial analysis.
+- **QuantPulse™ Deterministic Risk Engine (`v1.0`)**: Rigorous mathematical impermanent loss model ($IL(k)$) and multi-variable pool scoring.
+
+---
+
+## 🛠️ AI Agent Tools Registry
+| Tool Name | Version | Functionality |
+|---|---|---|
+| **`AgentWalletTool`** | `v1.0` | Base Sepolia key management, on-chain balance queries, EIP-191 signing, and autonomous ETH/USDC transfer broadcasting. |
+| **`PromptTransferEngine`** | `v1.0` | Natural language prompt extraction (token, amount, recipient) with in-chat interactive authorization and Base Sepolia transaction execution. |
+| **`X402PaywallTool`** | `v1.0` | Implements open HTTP 402 protocol specification with Coinbase facilitator verification for $0.01 USDC machine-to-machine micropayments. |
+| **`BaseRpcTool`** | `v1.0` | Real-time Base Sepolia Web3 RPC node monitor (gas tracker in Gwei, block height, 2s rollup finality). |
+| **`DefiLlamaTool`** | `v1.0` | Live Base yield pools, APY compositions (Base + Reward), and protocol TVL depth. |
+| **`DexscreenerTool`** | `v1.0` | Real-time DEX pair liquidity, 24h trading volume, and token pair pricing. |
+| **`CoinGeckoTool`** | `v1.0` | Real-time token price feeds and global market cap tracking. |
+| **`RiskEngineTool`** | `v1.0` | Deterministic mathematical AMM divergence calculator and impermanent loss risk curves. |
+
+---
+
+## 💸 Prompt-Based Crypto Transfers (In-Chat Interactive Execution)
+
+DefiSense enables natural language crypto transfers directly from the agent's wallet or user's connected wallet on Base Sepolia.
+
+**Example Prompts**:
+- `"Send 0.005 ETH to 0x742d35Cc6634C0532925a3b844Bc454e4438f44e"`
+- `"Transfer 0.001 ETH to 0xcc40f8B1B95CC6d86ba84Bee37932Fe419a03a1e"`
+
+**Interactive Authorization Flow**:
+1. **Extraction**: The agent parses the prompt, extracting the target `token`, `amount`, and `recipient address`.
+2. **Review & Authorization Card**: An interactive review card renders directly within the chat stream displaying token details, network, estimated fee, and recipient.
+3. **On-Chain Broadcast**: The user clicks **"Authorize & Send on Base Sepolia"**, broadcasting the transaction signed by the agent wallet (`0xcc40...3a1e`) with real-time Tx Hash and Basescan explorer link.
+
+---
+
+## 🔮 Future Scope & Upcoming Roadmap
+- **ZK-Proof Privacy Layer**: Private yield strategies using zero-knowledge proofs to obscure LP rebalancing from front-running MEV bots.
+- **Autonomous Multi-Pool Rebalancer**: Automated smart contract triggers to harvest and re-deposit rewards into highest risk-adjusted Base pools.
+- **Full x402 Client Agent SDK**: Lightweight client library enabling third-party AI agents to autonomously pay DefiSense in USDC per research query.
+- **Cross-Chain Bridge Orchestration**: Cross-rollup capital routing across the Superchain (Base, Optimism, Mode, Zora) via CCIP.
+
+---
+
+## 🎥 Demo Video Links
+Following the official submission format:
+- **Week 1 (`defisense.v1`)**: [Week 1 Prototype Demo Video](https://github.com/ashishh-tech/Maxit)
+- **Week 2 (`defisense.v2`)**: [Week 2 Demo Video with Voiceover](https://github.com/ashishh-tech/Maxit)
+- **Week 3 (`defisense.v3`)**: [Week 3 Demo Video with Voiceover](https://github.com/ashishh-tech/Maxit)
+
+---
+
+## 🌐 Community & Social Presence
+- **Project Repository**: [https://github.com/ashishh-tech/Maxit](https://github.com/ashishh-tech/Maxit)
+- **Live Deployment**: [https://agenticmaxai.netlify.app](https://agenticmaxai.netlify.app)
+- **Twitter / X**: Tagging [@riseinweb3](https://x.com/riseinweb3) · 3 updates shared weekly with hashtag `#RiseInHackathon #BaseAgent`
+
+---
+
 ## 📜 License
 
 This project is licensed under the [MIT License](./LICENSE) — feel free to use and build upon it.

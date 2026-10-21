@@ -236,7 +236,10 @@ export async function POST(req: Request) {
     }
 
     // Step 1: Intent Classification
-    const isWalletQuery = /wallet|balance|address|agent wallet|eth balance|usdc balance|x402|paywall|identity/i.test(qLower);
+    const sendRegex = /(?:send|transfer|pay)\s+([\d.]+)\s*(\w+)?\s*(?:to\s+)?(0x[a-fA-F0-9]{40})/i;
+    const sendMatch = query.match(sendRegex);
+    const isSendQuery = !!sendMatch;
+    const isWalletQuery = !isSendQuery && /wallet|balance|address|agent wallet|eth balance|usdc balance|x402|paywall|identity/i.test(qLower);
     const isGasQuery = /gas|block|rpc|fee|network|sepolia|tps/i.test(qLower);
     const isProtocolQuery = /protocol|tvl|top protocols|volume|market share|ranking|leaderboard/i.test(qLower);
     const isStableQuery = /stable|stablecoin|usdc|usdt|dai|safe|conservative|low risk/i.test(qLower);
@@ -253,7 +256,32 @@ export async function POST(req: Request) {
     const rawData: Record<string, any> = { rpcState, protocolsCount: protocols.length, totalPools: allPools.length };
 
     // Step 3: Targeted Synthesis based on Intent
-    if (isWalletQuery) {
+    if (isSendQuery && sendMatch) {
+      const parsedAmount = parseFloat(sendMatch[1]);
+      const parsedToken = (sendMatch[2] || "ETH").toUpperCase();
+      const parsedRecipient = sendMatch[3];
+      const agentAddress = process.env.AGENT_WALLET_ADDRESS || "0xcc40f8B1B95CC6d86ba84Bee37932Fe419a03a1e";
+
+      report = `# 💸 Natural Language Crypto Transfer Review
+DefiSense identified the following transaction details from your prompt:
+
+- **Token**: \`${parsedToken}\`
+- **Amount**: \`${parsedAmount} ${parsedToken}\`
+- **Recipient**: \`${parsedRecipient}\`
+- **Network**: \`Base Sepolia (Chain ID: 84532)\`
+- **Source**: DefiSense Agent Wallet (\`${agentAddress}\`)
+
+> 🔐 **Security Review**: Please review the transaction parameters above and click **"Authorize & Send"** below to broadcast this transfer on Base Sepolia.`;
+
+      rawData.transfer_intent = {
+        token: parsedToken,
+        amount: parsedAmount,
+        recipient: parsedRecipient,
+        network: "Base Sepolia",
+        chainId: 84532,
+        from: agentAddress,
+      };
+    } else if (isWalletQuery) {
       const agentAddress = process.env.AGENT_WALLET_ADDRESS || "0xcc40f8B1B95CC6d86ba84Bee37932Fe419a03a1e";
       let liveEthBalance = 0.06;
       try {

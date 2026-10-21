@@ -13,6 +13,16 @@ interface Message {
   sender: "user" | "agent";
   text: string;
   time: string;
+  transferIntent?: {
+    token: string;
+    amount: number;
+    recipient: string;
+    network: string;
+    from: string;
+    status?: "pending" | "broadcasting" | "success" | "error";
+    txHash?: string;
+    error?: string;
+  };
 }
 
 export default function DefiSenseApp() {
@@ -240,9 +250,16 @@ export default function DefiSenseApp() {
         poolsIndexed: data.raw_data?.totalPools || 148,
       });
 
+      const intent = data.raw_data?.transfer_intent;
+
       setChatHistory((prev) => [
         ...prev,
-        { sender: "agent", text: reportText, time: currentTime },
+        {
+          sender: "agent",
+          text: reportText,
+          time: currentTime,
+          transferIntent: intent ? { ...intent, status: "pending" } : undefined,
+        },
       ]);
     } catch {
       const errMsg = "⚠️ Agent connection timeout. Check live on-chain connection.";
@@ -258,6 +275,78 @@ export default function DefiSenseApp() {
       ]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleAuthorizeTransfer = async (msgIndex: number) => {
+    const msg = chatHistory[msgIndex];
+    if (!msg || !msg.transferIntent) return;
+
+    setChatHistory((prev) =>
+      prev.map((m, idx) =>
+        idx === msgIndex && m.transferIntent
+          ? { ...m, transferIntent: { ...m.transferIntent, status: "broadcasting" } }
+          : m
+      )
+    );
+
+    try {
+      const res = await fetch("/api/wallet/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: msg.transferIntent.recipient,
+          amount: msg.transferIntent.amount,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.tx_hash) {
+        setChatHistory((prev) =>
+          prev.map((m, idx) =>
+            idx === msgIndex && m.transferIntent
+              ? {
+                  ...m,
+                  transferIntent: {
+                    ...m.transferIntent,
+                    status: "success",
+                    txHash: data.tx_hash,
+                  },
+                }
+              : m
+          )
+        );
+        fetchWalletStatus();
+      } else {
+        setChatHistory((prev) =>
+          prev.map((m, idx) =>
+            idx === msgIndex && m.transferIntent
+              ? {
+                  ...m,
+                  transferIntent: {
+                    ...m.transferIntent,
+                    status: "error",
+                    error: data.error || "Transaction broadcast failed",
+                  },
+                }
+              : m
+          )
+        );
+      }
+    } catch (err: any) {
+      setChatHistory((prev) =>
+        prev.map((m, idx) =>
+          idx === msgIndex && m.transferIntent
+            ? {
+                ...m,
+                transferIntent: {
+                  ...m.transferIntent,
+                  status: "error",
+                  error: err.message || "Network error",
+                },
+              }
+            : m
+        )
+      );
     }
   };
 
@@ -517,6 +606,81 @@ export default function DefiSenseApp() {
                         }`}
                       >
                         {msg.text}
+
+                        {/* In-Chat Interactive Authorization Card */}
+                        {msg.transferIntent && (
+                          <div className="mt-3 p-3 rounded-xl bg-white border border-orange-200/90 shadow-xs space-y-2.5 font-sans text-left">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                                <span className="material-symbols-outlined text-[16px] text-orange-600">send</span>
+                                <span>Review Transfer Intent</span>
+                              </div>
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 font-semibold">
+                                Base Sepolia
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2 text-[11px] font-mono">
+                              <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                                <div className="text-[10px] text-slate-400 font-sans">Token & Amount</div>
+                                <div className="font-bold text-slate-900 mt-0.5">{msg.transferIntent.amount} {msg.transferIntent.token}</div>
+                              </div>
+                              <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
+                                <div className="text-[10px] text-slate-400 font-sans">Gas / Fee</div>
+                                <div className="font-bold text-emerald-600 mt-0.5">&lt; 0.0001 ETH</div>
+                              </div>
+                            </div>
+
+                            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 text-[11px] font-mono">
+                              <div className="text-[10px] text-slate-400 font-sans">Recipient Address</div>
+                              <div className="text-slate-800 break-all">{msg.transferIntent.recipient}</div>
+                            </div>
+
+                            {msg.transferIntent.status === "pending" && (
+                              <button
+                                onClick={() => handleAuthorizeTransfer(i)}
+                                className="w-full py-2 px-3 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-[15px]">verified_user</span>
+                                <span>Authorize &amp; Send on Base Sepolia</span>
+                              </button>
+                            )}
+
+                            {msg.transferIntent.status === "broadcasting" && (
+                              <div className="w-full py-2 px-3 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold flex items-center justify-center gap-1.5">
+                                <span className="material-symbols-outlined text-[15px] animate-spin">refresh</span>
+                                <span>Signing &amp; Broadcasting Transaction...</span>
+                              </div>
+                            )}
+
+                            {msg.transferIntent.status === "success" && (
+                              <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 space-y-1">
+                                <div className="font-semibold flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[16px] text-emerald-600">check_circle</span>
+                                  <span>Transfer Confirmed on Base Sepolia!</span>
+                                </div>
+                                <div className="font-mono text-[10px] text-slate-600 break-all">
+                                  Tx: {msg.transferIntent.txHash}
+                                </div>
+                                <a
+                                  href={`https://sepolia.basescan.org/tx/${msg.transferIntent.txHash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:underline pt-0.5"
+                                >
+                                  <span>View on Basescan</span>
+                                  <span className="material-symbols-outlined text-[13px]">open_in_new</span>
+                                </a>
+                              </div>
+                            )}
+
+                            {msg.transferIntent.status === "error" && (
+                              <div className="p-2 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-700">
+                                ⚠️ {msg.transferIntent.error || "Transaction broadcast failed"}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <span className="text-[10px] text-slate-400 font-mono mt-0.5 px-1">
                         {msg.time}
