@@ -248,6 +248,7 @@ DefiSense evolved from an initial single-prompt prototype into a full-fledged, m
 - **GitHub Repository**: [https://github.com/ashishh-tech/Maxit](https://github.com/ashishh-tech/Maxit)
 - **🌐 Live Demo**: [https://agenticmaxai.netlify.app](https://agenticmaxai.netlify.app) ← deployed on Netlify
 - **Live Experimentation Log**: [docs/EXPERIMENTATION_LOG.md](./docs/EXPERIMENTATION_LOG.md) (10 recorded experiments across APIs, workflows, and risk formulas)
+- **LinkedIn Post (Week 2)**: [DefiSense v2 Announcement](https://www.linkedin.com/feed/update/urn:li:activity:7515634796820242432/)
 
 ### 🔬 New Capabilities & Workflows Added in Week 2
 1. **Dynamic Intent Routing Workflow**: Automatically classifies prompts across Gas, Yields, Stablecoins, and DEX Comparisons, orchestrating targeted tool subsets instead of hitting redundant endpoints.
@@ -275,6 +276,7 @@ Autonomous AI agents in DeFi cannot rely on human credit cards or fiat payment r
 - **Agent Public Address**: `0xcc40f8B1B95CC6d86ba84Bee37932Fe419a03a1e`
 - **Supported Assets**: Native ETH (gas) & Circle Testnet USDC (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`)
 - **Key Management**: Managed via `AGENT_PRIVATE_KEY` in `.env` with fallback ephemeral generation.
+- **LinkedIn Post (Week 3)**: [DefiSense v3 Announcement](https://www.linkedin.com/feed/update/urn:li:activity:7519739772983070720/)
 
 ### The x402 Flow Diagram
 ```
@@ -392,6 +394,9 @@ Follows the official submission format:
 ## 🌐 Community & Social Presence
 - **Project Repository**: [https://github.com/ashishh-tech/Maxit](https://github.com/ashishh-tech/Maxit)
 - **Live Deployment**: [https://agenticmaxai.netlify.app](https://agenticmaxai.netlify.app)
+- **LinkedIn Updates**:
+  - 🚀 **Week 2 Post**: [DefiSense v2 — Autonomous DeFi Research Agent](https://www.linkedin.com/feed/update/urn:li:activity:7515634796820242432/)
+  - 👛 **Week 3 Post**: [DefiSense v3 — On-Chain Agent Wallet & x402 Micropayments](https://www.linkedin.com/feed/update/urn:li:activity:7519739772983070720/)
 - **Twitter / X**: Tagging [@riseinweb3](https://x.com/riseinweb3) · 3 updates shared weekly with hashtag `#RiseInHackathon #BaseAgent`
 
 ---
