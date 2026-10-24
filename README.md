@@ -14,6 +14,7 @@
 
 <p align="center">
   <a href="#-key-capabilities">Key Features</a> •
+  <a href="#-tech-stack--version-information">Tech Stack</a> •
   <a href="#-architecture">Architecture</a> •
   <a href="#-quantpulse-risk-engine">Risk Engine</a> •
   <a href="#-live-cli-demo">CLI Demo</a> •
@@ -24,6 +25,20 @@
 ---
 
 </div>
+
+## 🛠️ Tech Stack & Version Information
+
+| Component | Technology | Version | Purpose |
+|---|---|---|---|
+| **L2 Blockchain** | Base Sepolia | Chain ID `84532` | Native L2 rollup execution & low-gas settlement |
+| **Agent Backend** | Python | `3.12+` | Autonomous multi-tool orchestration & math engines |
+| **Web Framework** | FastAPI | `0.115.0+` | High-performance asynchronous REST endpoints |
+| **Web3 Engine (Backend)** | `web3.py` | `6.20.0+` | EVM RPC node interaction, key signing & Base node state |
+| **Frontend Framework** | Next.js (App Router) | `16.0.0` | Edge-rendered glassmorphic Web3 cockpit |
+| **Web3 Engine (Frontend)** | `viem` | `2.21.0+` | Browser transaction signing and RPC broadcasting |
+| **Micropayment Protocol** | x402 Specification | `v1.0` | HTTP 402 machine-to-machine paywall standard |
+| **Testnet Currency** | Circle USDC | ERC-20 (`0x036CbD...`) | Base Sepolia testnet settlement token |
+| **Data Aggregators** | DeFi Llama & Dexscreener | REST APIs | Live liquidity pool APYs, TVL depth, and trading pairs |
 
 ## 🌌 Overview
 
@@ -365,10 +380,12 @@ DefiSense enables natural language crypto transfers directly from the agent's wa
 ---
 
 ## 🎥 Demo Video Links
-Following the official submission format:
-- **Week 1 (`defisense.v1`)**: [Week 1 Prototype Demo Video](https://github.com/ashishh-tech/Maxit)
-- **Week 2 (`defisense.v2`)**: [https://youtu.be/itqAC2CK4x8](https://youtu.be/itqAC2CK4x8)
-- **Week 3 (`defisense.v3`)**: [https://youtu.be/4W3BllfwnXk](https://youtu.be/4W3BllfwnXk)
+
+Follows the official submission format:
+
+- **Week 1 (defisense.v1)**: https://github.com/ashishh-tech/Maxit
+- **Week 2 (defisense.v2)**: https://youtu.be/itqAC2CK4x8
+- **Week 3 (defisense.v3)**: https://youtu.be/4W3BllfwnXk
 
 ---
 
